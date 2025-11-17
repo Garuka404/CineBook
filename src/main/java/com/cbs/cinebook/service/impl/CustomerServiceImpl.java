@@ -13,6 +13,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
+
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -120,20 +124,24 @@ public class CustomerServiceImpl implements CustomerService {
         }
      }
     @Override
-    public ResponseEntity<CustomerResponseDTO> getAllCustomer() {
+    public ResponseEntity<List<Customer>> getAllCustomer() {
         try{
-            if(customerRepository.count()!=0){
-                log.info("All Customer Successfully");
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new CustomerResponseDTO("All Customer Successfully",modelMapper.map(customerRepository.findAll(), Customer.class)));
+            List<CustomerEntity> customerEntities = customerRepository.findAll();
+
+            if (customerEntities.isEmpty()) {
+                log.warn("No customers found");
+                return ResponseEntity.noContent().build();
             }
-            log.warn("Customer Count is empty");
-            return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                    .body(new CustomerResponseDTO("Customer Count is empty",null));
+            List<Customer> customers = customerEntities.stream()
+                    .map(entity -> modelMapper.map(entity, Customer.class))
+                    .toList();
+            log.info("Fetched all customers successfully, count: {}", customers.size());
+            return ResponseEntity.ok(customers);
+
         }catch (Exception ex){
             log.error("Exception while finding user: {}", ex.getMessage(), ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new CustomerResponseDTO("An exception occurred: " + ex.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
         }
     }
 

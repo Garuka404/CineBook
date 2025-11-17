@@ -1,7 +1,11 @@
 package com.cbs.cinebook.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -30,5 +34,9 @@ public class CustomerEntity {
 
     @Column(nullable = false,length = 10)
     private String age;
+
+    @OneToMany(mappedBy = "bookedBy",cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private Set<ReservationEntity> reservations=new HashSet<>();
 
 }
