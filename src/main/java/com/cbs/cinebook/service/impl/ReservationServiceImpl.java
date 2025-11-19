@@ -63,7 +63,6 @@ public class ReservationServiceImpl implements ReservationService {
             log.info("No reservation with id: {}", reservationId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ReservationResponseDTO("reservation with "+reservationId+" not exist ",null));
-
         }catch (Exception e){
             log.error("Exception while finding user: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -74,7 +73,7 @@ public class ReservationServiceImpl implements ReservationService {
     public ResponseEntity<ReservationResponseDTO> setReservation(Reservation reservation) {
         try{
             if(reservation==null){
-                log.error("reservations is null");
+                log.error("reservations is null for the add");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
             if(!reservationRepository.existsById(reservation.getReservationId())){
@@ -100,7 +99,7 @@ public class ReservationServiceImpl implements ReservationService {
     public ResponseEntity<ReservationResponseDTO> deleteReservation(Long reservationId) {
         try{
             if(reservationId==null){
-                log.warn("reservations is null");
+                log.warn("reservations is null for the delete");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
             if(reservationRepository.existsById(reservationId)){
@@ -109,7 +108,7 @@ public class ReservationServiceImpl implements ReservationService {
                 return ResponseEntity.status(HttpStatus.OK)
                         .body(new ReservationResponseDTO("reservation "+reservationId+" delected Successfully ",null));
             }
-            log.warn("No reservation with id: {}", reservationId);
+            log.warn("No reservation with id: {} for the delete", reservationId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ReservationResponseDTO("reservation not found",null));
         }catch (Exception e){
@@ -169,7 +168,7 @@ public class ReservationServiceImpl implements ReservationService {
     public ResponseEntity<List<Reservation>> getReservationByTime(LocalTime reservationTime) {
         try{
             if(reservationTime==null){
-                log.warn("reservationsTime is null");
+                log.warn("reservationsTime is null for the get reservations");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
             List<ReservationEntity>reservationEntities=reservationRepository.getReservationByTime(reservationTime);
@@ -188,4 +187,30 @@ public class ReservationServiceImpl implements ReservationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
      }
+
+    @Override
+    public ResponseEntity<List<Reservation>> getReservationByDateAndTime(LocalDate reservationDate, LocalTime reservationTime) {
+        try{
+            if(reservationDate==null || reservationTime==null){
+                log.warn("reservations Date or Time is null");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            List<ReservationEntity> reservationEntities=reservationRepository.findByDateAndTime(reservationDate, reservationTime);
+            if(!reservationEntities.isEmpty()){
+                List<Reservation> reservations=reservationEntities.stream()
+                        .map(entity ->modelMapper.map(entity, Reservation.class)).toList();
+                log.info("Found reservations with date: {} and time: {}", reservationDate, reservationTime);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .body(reservations);
+            }
+            log.warn("No reservations with date: {} and time: {}", reservationDate, reservationTime);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }catch (Exception e){
+            log.error("Exception while finding user: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+    }
+
+
 }

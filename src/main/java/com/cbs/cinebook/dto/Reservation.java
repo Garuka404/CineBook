@@ -4,6 +4,8 @@ import com.cbs.cinebook.entity.CustomerEntity;
 import lombok.*;
 import java.sql.Time;
 import java.util.Date;
+import java.util.UUID;
+
 @Setter
 @Getter
 @ToString

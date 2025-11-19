@@ -1,6 +1,5 @@
 package com.cbs.cinebook.service.impl;
 
-import com.cbs.cinebook.constant.ApplicationConstant;
 import com.cbs.cinebook.dto.Customer;
 import com.cbs.cinebook.dto.response.CustomerResponseDTO;
 import com.cbs.cinebook.entity.CustomerEntity;
@@ -24,7 +23,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final ModelMapper modelMapper;
-    private final ApplicationConstant applicationConstant;
+
 
 
     @Override
@@ -54,7 +53,7 @@ public class CustomerServiceImpl implements CustomerService {
     public ResponseEntity<CustomerResponseDTO> setCustomer(Customer customer) {
         try {
             if (customer == null) {
-                log.error("Customer {}",applicationConstant.getErrorMsg());
+                log.error("Customer is null for the add");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new CustomerResponseDTO("Customer is null", null));
             }
@@ -78,7 +77,7 @@ public class CustomerServiceImpl implements CustomerService {
     public ResponseEntity<CustomerResponseDTO> updateCustomer(Customer customer) {
         try{
             if(customer == null) {
-                log.error("Customer "+applicationConstant.getErrorMsg());
+                log.error("Customer is null for update");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new CustomerResponseDTO("Customer is null", null));
             }
@@ -89,7 +88,7 @@ public class CustomerServiceImpl implements CustomerService {
                         .body(new CustomerResponseDTO("Customer with email " + customer.getEmail() + " updated successfully", customer));
 
             }
-            log.warn("Customer with email {} not exits", customer.getEmail());
+            log.warn("Customer with email {} not exits for the update", customer.getEmail());
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new CustomerResponseDTO("Customer with email " + customer.getEmail() + " not exits", customer));
 
@@ -104,7 +103,7 @@ public class CustomerServiceImpl implements CustomerService {
     public ResponseEntity<CustomerResponseDTO> deleteCustomer(String email) {
         try{
             if(email == null || email.isEmpty()) {
-                log.error("Email is null"+applicationConstant.getErrorMsg());
+                log.error("Email is null for the delete");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new CustomerResponseDTO("Email is null", null));
             }
@@ -114,7 +113,7 @@ public class CustomerServiceImpl implements CustomerService {
                 ResponseEntity.status(HttpStatus.OK)
                         .body(new CustomerResponseDTO("Customer with email "+email+" deleted Successfully",null));
             }
-            log.warn("Customer with email {} not exits", email);
+            log.warn("Customer with email {} not exits for the delete", email);
            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                      .body(new CustomerResponseDTO("Customer with email "+email+" not exits", null));
         }catch (Exception ex){

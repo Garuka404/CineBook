@@ -1,15 +1,11 @@
 package com.cbs.cinebook.entity;
 
-import com.cbs.cinebook.dto.Customer;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Date;
-import java.util.UUID;
 
 @Setter
 @Getter
@@ -21,7 +17,7 @@ import java.util.UUID;
 @Table(name = "reservation")
 public class ReservationEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reservation_id", nullable = false, updatable = false)
     private Long reservationId;
 
@@ -41,4 +37,10 @@ public class ReservationEntity {
     @JoinColumn(name = "bookedBy", nullable = false)
     @JsonBackReference
     private CustomerEntity bookedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cinema_id",nullable = false)
+    @JsonBackReference
+    private CinemaEntity cinema;
+
 }
