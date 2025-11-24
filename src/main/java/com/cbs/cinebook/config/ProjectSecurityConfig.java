@@ -1,7 +1,9 @@
 package com.cbs.cinebook.config;
 
 import com.cbs.cinebook.filter.CsrfCookieFilter;
+import com.cbs.cinebook.filter.KeycloakUserSyncFilter;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -20,8 +22,10 @@ import java.util.Collections;
 
 @Configuration
 @Profile("!prod")
+@RequiredArgsConstructor
 public class ProjectSecurityConfig {
-    @Bean
+    private final KeycloakUserSyncFilter keycloakUserSyncFilter;
+     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeyclockRoleConverter());
@@ -45,9 +49,11 @@ public class ProjectSecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
+                .addFilterBefore(keycloakUserSyncFilter,BasicAuthenticationFilter.class)
                 .requiresChannel(rcc->rcc.anyRequest().requiresInsecure())
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/customer/all").hasAnyRole("ADMIN")
+                        .requestMatchers("/customer/all").hasRole("ADMIN")
+                        .requestMatchers("/customer/add").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/not","/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html").permitAll());
         http.oauth2ResourceServer(rsc->rsc.jwt(jwtConfigurer->jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 

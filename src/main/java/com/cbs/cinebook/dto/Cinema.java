@@ -1,5 +1,6 @@
 package com.cbs.cinebook.dto;
 
+import com.cbs.cinebook.entity.BranchEntity;
 import lombok.*;
 
 @Setter
@@ -14,9 +15,6 @@ public class Cinema {
     private String hallNumber;
     private String location;
     private String capacity;
-
-
-
-
+    private BranchEntity branch;
 
 }

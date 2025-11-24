@@ -2,6 +2,7 @@ package com.cbs.cinebook.service.impl;
 
 import com.cbs.cinebook.dto.Cinema;
 import com.cbs.cinebook.dto.response.CinemaResponseDTO;
+import com.cbs.cinebook.entity.BranchEntity;
 import com.cbs.cinebook.entity.CinemaEntity;
 import com.cbs.cinebook.repositoty.CinemaRepository;
 import com.cbs.cinebook.service.CinemaService;
@@ -115,14 +116,19 @@ public class CinemaServiceImpl implements CinemaService {
                 log.warn("Cinema is null for the add for the cinema");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if (cinemaRepository.existsById(cinema.getId())) {
-                log.warn("Cinema entity already exists for the add for the cinema");
-                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            if (!cinemaRepository.existsById(cinema.getId())) {
+                BranchEntity  branch=modelMapper.map(cinema.getBranch().getId(), BranchEntity.class);
+                CinemaEntity cinemaEntity=modelMapper.map(cinema,CinemaEntity.class);
+                cinema.setBranch(branch);
+                branch.getCinemas().add(cinemaEntity);
+                cinemaRepository.save(cinemaEntity);
+                log.info("Cinema entity has been successfully added");
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new CinemaResponseDTO("Cinema id " + cinema.getId() + "added successfully ",cinema));
             }
-            cinemaRepository.save(modelMapper.map(cinema, CinemaEntity.class));
-            log.info("Cinema entity has been successfully added");
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(new CinemaResponseDTO("Cinema id " + cinema.getId() + "added successfully ",cinema));
+            log.warn("Cinema entity already exists for the add for the cinema");
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+
 
         }catch(Exception ex){
             log.error("Exception while finding Cinema by ID: {}", ex.getMessage(), ex);

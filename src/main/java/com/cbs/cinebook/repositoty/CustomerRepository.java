@@ -10,4 +10,5 @@ import org.springframework.stereotype.Service;
 public interface CustomerRepository extends JpaRepository<CustomerEntity, Long> {
     CustomerEntity findByEmail(String email);
     boolean existsByEmail(String email);
+    boolean existsByKeyClockId(String keycloakId);
 }

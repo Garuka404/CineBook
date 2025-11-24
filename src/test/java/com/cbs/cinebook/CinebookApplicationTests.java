@@ -8,6 +8,7 @@ class CinebookApplicationTests {
 
 	@Test
 	void contextLoads() {
+
 	}
 
 }

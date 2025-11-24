@@ -8,6 +8,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Customer {
+    private Long id;
+    private String keyClockId;
     private String name;
     private String email;
     private String address;
