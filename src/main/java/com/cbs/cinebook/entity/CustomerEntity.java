@@ -20,22 +20,22 @@ public class CustomerEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-   // @Column(nullable = false)
+    @Column(nullable = false)
     private String keyClockId;
 
-   // @Column(nullable = false,length = 50)
+    @Column(nullable = false,length = 50)
     private String name;
 
-  //  @Column(nullable = false,length = 100)
+    @Column(nullable = false,length = 100)
     private String address;
 
-   // @Column(unique = true ,nullable = false,length = 100)
+    @Column(unique = true ,nullable = false,length = 100)
     private String email;
 
-   // @Column(nullable = false,length = 10)
+    @Column(nullable = false,length = 10)
     private String contactNo;
 
-   // @Column(nullable = false,length = 10)
+    @Column(nullable = false,length = 10)
     private String age;
 
     @OneToMany(mappedBy = "bookedBy",cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,7 +1,8 @@
-package com.cbs.cinebook.dto;
+package com.cbs.cinebook.dto.request;
 
-import com.cbs.cinebook.entity.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -11,17 +12,16 @@ import java.util.List;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class Reservation {
+public class ReservationRequestDTO {
     private Long reservationId;
+    @Size(min = 1, max = 50)
     private String conNumber;
     private String description;
     private LocalDate date;
     private LocalTime time;
-    private CustomerEntity customer;
-    private CinemaEntity cinema;
-    private MovieEntity movie;
-    private List<SeatEntity> seats;
-    private Double totalPrice;
-    private String status;
+    private Long customerId;
+    private Long cinemaId;
+    private Long  movieId;
+    private List<Long> seatIds;
 
 }

@@ -12,7 +12,6 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Builder
 public class Movie {
     private Long id;
     private String name;

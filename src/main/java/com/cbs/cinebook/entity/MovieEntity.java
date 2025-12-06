@@ -41,5 +41,9 @@ public class MovieEntity {
     @JsonBackReference
     private Set<BranchEntity> branches=new HashSet<>();
 
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
+    @JsonBackReference
+    private Set<ReservationEntity> reservations=new HashSet<>();
+
 
 }

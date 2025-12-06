@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/cinema")
+@RequestMapping("/api/cinema")
 @RequiredArgsConstructor
 public class CinemaController {
     private final CinemaService cinemaService;

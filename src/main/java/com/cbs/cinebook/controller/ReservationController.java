@@ -1,6 +1,7 @@
 package com.cbs.cinebook.controller;
 
 import com.cbs.cinebook.dto.Reservation;
+import com.cbs.cinebook.dto.request.ReservationRequestDTO;
 import com.cbs.cinebook.dto.response.ReservationResponseDTO;
 import com.cbs.cinebook.entity.ReservationEntity;
 import com.cbs.cinebook.service.ReservationService;
@@ -14,13 +15,13 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/reservation")
+@RequestMapping("/api/reservation")
 public class ReservationController {
     private final ReservationService reservationService;
 
     @PostMapping("/add")
-    public ResponseEntity<ReservationResponseDTO> addReservation(@RequestBody Reservation reservation) {
-        return reservationService.setReservation(reservation);
+    public ResponseEntity<ReservationResponseDTO> addReservation(@RequestBody ReservationRequestDTO reservationRequestDTO) {
+        return reservationService.setReservation(reservationRequestDTO);
     }
     @GetMapping("/all")
     public ResponseEntity<List<Reservation>> getAllReservations() {

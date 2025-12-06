@@ -71,7 +71,7 @@ public class MovieServiceImpl implements MovieService {
                 return  ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
             if(movieRepository.existsById(movie.getId())){
-                log.warn("Movie with id {} not found for the add movie", movie.getId());
+                log.warn("Movie with id {}  already  added", movie.getId());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
             BranchEntity branchEntity=modelMapper.map(branchRepository.findById(movie.getBranchId()),BranchEntity.class);

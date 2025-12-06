@@ -12,7 +12,7 @@ import lombok.*;
 public class Cinema {
     private Long id;
     private String name;
-    private String hallNumber;
+    private Long hallNumber;
     private String location;
     private String capacity;
     private BranchEntity branch;

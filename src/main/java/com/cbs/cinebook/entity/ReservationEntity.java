@@ -1,15 +1,17 @@
 package com.cbs.cinebook.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Setter
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
@@ -42,5 +44,14 @@ public class ReservationEntity {
     @JoinColumn(name = "cinema_id",nullable = false)
     @JsonBackReference
     private CinemaEntity cinema;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "movie_id", nullable = false)
+    @JsonBackReference
+    private MovieEntity movie;
+
+    @OneToMany(mappedBy = "reservation",cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private Set<SeatEntity> seats=new HashSet<>();
 
 }

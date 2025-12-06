@@ -1,6 +1,5 @@
 package com.cbs.cinebook.repositoty;
 
-import com.cbs.cinebook.dto.Movie;
 import com.cbs.cinebook.entity.MovieEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 

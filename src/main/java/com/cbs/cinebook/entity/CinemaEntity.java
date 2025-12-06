@@ -10,7 +10,6 @@ import java.util.Set;
 
 @Setter
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
@@ -26,7 +25,7 @@ public class CinemaEntity {
     private String name;
 
     @Column(name = "hall_number", nullable = false,unique = true)
-    private String hallNumber;
+    private Long hallNumber;
 
     @Column(name = "hall_capacity")
     private Long capacity;
@@ -38,9 +37,13 @@ public class CinemaEntity {
     @JsonManagedReference
     private Set<ReservationEntity> reservations=new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "branch_id",nullable = false)
     @JsonBackReference
     private BranchEntity branch;
+
+    @OneToMany(mappedBy = "cinema",cascade = CascadeType.ALL,orphanRemoval = true)
+    @JsonManagedReference
+    private Set<SeatEntity> seats=new HashSet<>();
 
 }

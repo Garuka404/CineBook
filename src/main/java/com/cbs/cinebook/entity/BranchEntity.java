@@ -12,7 +12,6 @@ import java.util.Set;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @Entity
 @Table(name = "branch")
 public class BranchEntity {
@@ -39,7 +38,6 @@ public class BranchEntity {
     @JoinTable(name = "movie_branch",
              joinColumns = @JoinColumn(name = "branch_id"),
              inverseJoinColumns = @JoinColumn(name = "movie_id")
-
     )
     @JsonManagedReference
     private Set<MovieEntity> movies=new HashSet<>();

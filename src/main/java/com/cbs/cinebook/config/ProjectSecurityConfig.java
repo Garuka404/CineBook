@@ -49,10 +49,10 @@ public class ProjectSecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
-                .addFilterBefore(keycloakUserSyncFilter,BasicAuthenticationFilter.class)
+                //.addFilterBefore(keycloakUserSyncFilter,BasicAuthenticationFilter.class)
                 .requiresChannel(rcc->rcc.anyRequest().requiresInsecure())
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/customer/all").hasRole("ADMIN")
+                        .requestMatchers("/api/customer/all").hasAnyRole("ADMIN","USER")
                         .requestMatchers("/customer/add").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/not","/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html").permitAll());
         http.oauth2ResourceServer(rsc->rsc.jwt(jwtConfigurer->jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)));
