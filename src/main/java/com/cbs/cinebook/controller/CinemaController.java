@@ -1,6 +1,7 @@
 package com.cbs.cinebook.controller;
 
 import com.cbs.cinebook.dto.Cinema;
+import com.cbs.cinebook.dto.request.CinemaRequestDTO;
 import com.cbs.cinebook.dto.response.CinemaResponseDTO;
 import com.cbs.cinebook.service.CinemaService;
 import lombok.RequiredArgsConstructor;
@@ -15,24 +16,24 @@ import java.util.List;
 public class CinemaController {
     private final CinemaService cinemaService;
 
-    @PostMapping("/add")
-    private ResponseEntity<CinemaResponseDTO> addCinema(@RequestBody Cinema cinema) {
+    @PostMapping
+    private ResponseEntity<CinemaResponseDTO> addCinema(@RequestBody CinemaRequestDTO cinema) {
         return cinemaService.addCinema(cinema);
     }
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<List<Cinema>> getAllCinemas() {
         return cinemaService.getAllCinemas();
     }
-    @GetMapping("/search-by-id")
-    public ResponseEntity<CinemaResponseDTO> getCinemaById(@RequestParam Long id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<CinemaResponseDTO> getCinemaById(@PathVariable Long id) {
         return cinemaService.getCinemasById(id);
     }
-    @PutMapping("/update")
-    public ResponseEntity<CinemaResponseDTO> updateCinema(@RequestBody Cinema cinema) {
+    @PutMapping
+    public ResponseEntity<CinemaResponseDTO> updateCinema(@RequestBody CinemaRequestDTO cinema) {
         return cinemaService.updateCinema(cinema);
     }
-    @DeleteMapping("/delete")
-    public ResponseEntity<CinemaResponseDTO> deleteCinema(@RequestParam Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<CinemaResponseDTO> deleteCinema(@PathVariable Long id) {
         return cinemaService.deleteCinema(id);
     }
 }

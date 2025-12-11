@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ReservationRequestDTO {
     private Long reservationId;
-    @Size(min = 1, max = 50)
+    @Size(min = 10, max = 10)
     private String conNumber;
     private String description;
     private LocalDate date;

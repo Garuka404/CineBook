@@ -1,9 +1,11 @@
 package com.cbs.cinebook.service.impl;
 
 import com.cbs.cinebook.dto.Cinema;
+import com.cbs.cinebook.dto.request.CinemaRequestDTO;
 import com.cbs.cinebook.dto.response.CinemaResponseDTO;
 import com.cbs.cinebook.entity.BranchEntity;
 import com.cbs.cinebook.entity.CinemaEntity;
+import com.cbs.cinebook.repositoty.BranchRepository;
 import com.cbs.cinebook.repositoty.CinemaRepository;
 import com.cbs.cinebook.service.CinemaService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class CinemaServiceImpl implements CinemaService {
 
     private final CinemaRepository cinemaRepository;
     private final ModelMapper modelMapper;
+    private final BranchRepository branchRepository;
 
 
     @Override
@@ -73,10 +76,14 @@ public class CinemaServiceImpl implements CinemaService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
             if (cinemaRepository.existsById(id)) {
-                cinemaRepository.deleteById(id);
-                log.info("Cinema {} entity has been successfully deleted", id);
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new CinemaResponseDTO("Cinema " + id + "entity has been successfully deleted ", null));
+                CinemaEntity cinemaEntity = cinemaRepository.findById(id).orElse(null);
+                if (cinemaEntity != null) {
+                    cinemaRepository.delete(cinemaEntity);
+                    log.info("Cinema {} entity has been successfully deleted", id);
+                    return ResponseEntity.status(HttpStatus.OK)
+                            .body(new CinemaResponseDTO("Cinema " + id + "entity has been successfully deleted ", null));
+                }
+
             }
             log.info("Cinema id {} not found for the delete for the cinema", id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -88,21 +95,21 @@ public class CinemaServiceImpl implements CinemaService {
     }
 
     @Override
-    public ResponseEntity<CinemaResponseDTO> updateCinema(Cinema cinema) {
+    public ResponseEntity<CinemaResponseDTO> updateCinema(CinemaRequestDTO cinemaRequestDTO) {
         try {
-            if (cinema == null) {
+            if (cinemaRequestDTO == null) {
                 log.warn("Cinema is null for the update for the cinema");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if (cinemaRepository.existsById(cinema.getId())) {
-                cinemaRepository.save(modelMapper.map(cinema, CinemaEntity.class));
+            if (cinemaRepository.existsById(cinemaRequestDTO.getId())) {
+                cinemaRepository.save(modelMapper.map(cinemaRequestDTO, CinemaEntity.class));
                 log.info("Cinema entity has been successfully updated");
                 return ResponseEntity.status(HttpStatus.OK)
-                        .body(new CinemaResponseDTO("Cinema id " + cinema.getId() + "updated successfully ", null));
+                        .body(new CinemaResponseDTO("Cinema id " + cinemaRequestDTO.getId() + "updated successfully ", null));
             }
-            log.info("Cinema id {} not found for the update", cinema.getId());
+            log.info("Cinema id {} not found for the update", cinemaRequestDTO.getId());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new CinemaResponseDTO("Cinema id "+cinema.getId()+" not found for the update", null));
+                    .body(new CinemaResponseDTO("Cinema id "+cinemaRequestDTO.getId()+" not found for the update", null));
         }catch(Exception ex){
             log.error("Exception while finding Cinema by ID: {}", ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -110,21 +117,40 @@ public class CinemaServiceImpl implements CinemaService {
     }
 
     @Override
-    public ResponseEntity<CinemaResponseDTO> addCinema(Cinema cinema) {
+    public ResponseEntity<CinemaResponseDTO> addCinema(CinemaRequestDTO cinemaRequestDTO) {
         try{
-            if(cinema == null) {
+            if(cinemaRequestDTO == null) {
                 log.warn("Cinema is null for the add for the cinema");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if (!cinemaRepository.existsById(cinema.getId())) {
-                BranchEntity  branch=modelMapper.map(cinema.getBranch().getId(), BranchEntity.class);
-                CinemaEntity cinemaEntity=modelMapper.map(cinema,CinemaEntity.class);
-                cinema.setBranch(branch);
-                branch.getCinemas().add(cinemaEntity);
-                cinemaRepository.save(cinemaEntity);
-                log.info("Cinema entity has been successfully added");
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new CinemaResponseDTO("Cinema id " + cinema.getId() + "added successfully ",cinema));
+            if (!cinemaRepository.existsById(cinemaRequestDTO.getId())) {
+
+                if(branchRepository.existsById(cinemaRequestDTO.getBranchId())) {
+                    BranchEntity branchEntity =branchRepository.findById(cinemaRequestDTO.getBranchId()).orElse(null);
+                    if(branchEntity!=null) {
+                        Cinema cinema=new Cinema();
+                        cinema.setId(cinemaRequestDTO.getId());
+                        cinema.setName(cinemaRequestDTO.getName());
+                        cinema.setHallNumber(cinemaRequestDTO.getHallNumber());
+                        cinema.setCapacity(cinemaRequestDTO.getCapacity());
+                        cinema.setLocation(cinemaRequestDTO.getLocation());
+                        cinema.setBranch(branchEntity);
+
+                        CinemaEntity cinemaEntity = modelMapper.map(cinema, CinemaEntity.class);
+
+                        branchEntity.getCinemas().add(cinemaEntity);
+                        branchRepository.save(branchEntity);
+                        cinemaRepository.save(cinemaEntity);
+                        log.info("Cinema entity has been successfully added");
+                        return ResponseEntity.status(HttpStatus.OK)
+                                .body(new CinemaResponseDTO("Cinema id " + cinema.getId() + "added successfully ",cinema));
+
+                    }
+                }
+                log.warn("Branch id {} not found for the add", cinemaRequestDTO.getBranchId());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
+
             }
             log.warn("Cinema entity already exists for the add for the cinema");
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
