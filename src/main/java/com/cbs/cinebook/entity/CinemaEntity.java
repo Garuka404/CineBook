@@ -24,7 +24,7 @@ public class CinemaEntity {
     @Column(name = "hall_name", nullable = false,length = 50)
     private String name;
 
-    @Column(name = "hall_number", nullable = false,unique = true)
+    @Column(name = "hall_number", nullable = false)
     private Long hallNumber;
 
     @Column(name = "hall_capacity")
@@ -38,8 +38,8 @@ public class CinemaEntity {
     private Set<ReservationEntity> reservations=new HashSet<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "branch_id",nullable = false)
-    @JsonBackReference
+    @JoinColumn(name = "branch_id")
+    @JsonManagedReference
     private BranchEntity branch;
 
     @OneToMany(mappedBy = "cinema",cascade = CascadeType.ALL,orphanRemoval = true)

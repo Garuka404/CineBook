@@ -1,15 +1,19 @@
 package com.cbs.cinebook.service.impl;
 
-import com.cbs.cinebook.dto.Reservation;
-import com.cbs.cinebook.dto.request.ReservationRequestDTO;
+import com.cbs.cinebook.dto.*;
 import com.cbs.cinebook.dto.response.ReservationResponseDTO;
 import com.cbs.cinebook.entity.*;
+import com.cbs.cinebook.enums.ReservationStatus;
+import com.cbs.cinebook.enums.SeatType;
+import com.cbs.cinebook.event.ReservationCreatedEventProducer;
+import com.cbs.cinebook.event.ReservationSuccessEventProducer;
 import com.cbs.cinebook.repositoty.*;
 import com.cbs.cinebook.service.ReservationService;
+import com.cbs.cinebook.socket.ReservationSender;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,13 +21,13 @@ import org.springframework.web.client.ResourceAccessException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
@@ -32,6 +36,9 @@ public class ReservationServiceImpl implements ReservationService {
     private  final CinemaRepository cinemaRepository;
     private final MovieRepository movieRepository;
     private final SeatRepository seatRepository;
+    private final ReservationSender sender;
+    private final ReservationCreatedEventProducer reservationCreatedEventProducer;
+    private final ReservationSuccessEventProducer reservationSuccessEventProducer;
 
 
     @Override
@@ -43,8 +50,14 @@ public class ReservationServiceImpl implements ReservationService {
               return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
           }
           List<Reservation> reservations=reservationEntities.stream()
-                  .map(entity ->modelMapper.map(entity, Reservation.class))
+                  .map(entity ->{
+                   Reservation reservation= modelMapper.map(entity, Reservation.class);
+                   List<Long> seatIds=entity.getSeats().stream().map(SeatEntity::getId).toList();
+                   reservation.setSeatIds(seatIds);
+                   return reservation;
+                  })
                   .toList();
+
           log.info("Fetched all reservations successfully, count: {}", reservations.size());
           return ResponseEntity.ok(reservations);
         }catch (Exception e){
@@ -54,17 +67,17 @@ public class ReservationServiceImpl implements ReservationService {
      }
 
     @Override
-    public ResponseEntity<ReservationResponseDTO> getReservationById(Long reservationId) {
+    public ResponseEntity<ReservationResponseDTO> getReservationById(UUID reservationId) {
         try{
             if(reservationId==null){
               log.warn("No reservations found");
               return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if(reservationRepository.existsById(reservationId)){
+            if(reservationRepository.existsByReservationId(reservationId)){
                 log.info("Found reservation with id: {}", reservationId);
                 return ResponseEntity.status(HttpStatus.FOUND)
                         .body(new  ReservationResponseDTO("reservation ",modelMapper
-                                .map(reservationRepository.findById(reservationId), Reservation.class)));
+                                .map(reservationRepository.findByReservationId(reservationId),Reservation.class)));
             }
             log.info("No reservation with id: {}", reservationId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -76,7 +89,8 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public ResponseEntity<ReservationResponseDTO> setReservation(ReservationRequestDTO reservationRequestDTO) {
+    @Transactional
+    public ResponseEntity<ReservationResponseDTO> setReservation(Reservation  reservationRequestDTO) {
         try{
             if(reservationRequestDTO==null){
                 log.error("reservations is null for the add");
@@ -110,19 +124,22 @@ public class ReservationServiceImpl implements ReservationService {
             reservationEntity.setDescription(reservationRequestDTO.getDescription());
             reservationEntity.setDate(reservationRequestDTO.getDate());
             reservationEntity.setTime(reservationRequestDTO.getTime());
-            reservationEntity.setBookedBy(customerEntity);
+            reservationEntity.setCustomer(customerEntity);
             reservationEntity.setCinema(cinemaEntity);
+            reservationEntity.setStatus(ReservationStatus.PENDING);
             reservationEntity.setMovie(movieEntity);
 
-            Set<SeatEntity> seats=new HashSet<>();
+
+           // Set<SeatEntity> seats=new HashSet<>();
             for(SeatEntity seatEntity : seatEntities){
                 seatEntity.setAvailable(false);
-                seatEntity.setReservation(reservationEntity);
-                seats.add(seatEntity);
+                seatEntity.getReservation().add(reservationEntity);
+                reservationEntity.getSeats().add(seatEntity);
             }
-            reservationEntity.setSeats(seats);
+
             ReservationEntity savedReservation=reservationRepository.save(reservationEntity);
             log.info("Created reservation with id : {}",reservationEntity.getReservationId());
+
 
             Reservation reservation=new Reservation();
             reservation.setReservationId(savedReservation.getReservationId());
@@ -130,11 +147,51 @@ public class ReservationServiceImpl implements ReservationService {
             reservation.setDescription(savedReservation.getDescription());
             reservation.setDate(savedReservation.getDate());
             reservation.setTime(savedReservation.getTime());
-            reservation.setCustomer(savedReservation.getBookedBy());
-            CinemaEntity cinema=savedReservation.getCinema();
-            cinema.setBranch(savedReservation.getCinema().getBranch());
-            reservation.setCinema(cinema);
-            reservation.setMovie(savedReservation.getMovie());
+            reservation.setCinemaId(cinemaEntity.getId());
+            reservation.setMovieId(movieEntity.getId());
+            reservation.setCustomerId(customerEntity.getId());
+
+            List<Long> seatIds=savedReservation.getSeats()
+                    .stream().map(SeatEntity::getId).collect(Collectors.toList());
+            reservation.setSeatIds(seatIds);
+
+            sender.broadcast(new ReservationResponseDTO("Reservation made successfully",reservation));
+
+            List<SeatDetail> seatDetails=new ArrayList<>();
+            PaymentDetails paymentDetails=new PaymentDetails();
+            paymentDetails.setReservationId(reservationEntity.getReservationId());
+            paymentDetails.setCustomerName(reservationEntity.getCustomer().getName());
+            paymentDetails.setEmail(reservationEntity.getCustomer().getEmail());
+            paymentDetails.setCurrency("LKR");
+
+            Map<SeatType,Integer> seatCountMap=new EnumMap<>(SeatType.class);
+            Map<SeatType,Double>seatUnitPriceMap=new EnumMap<>(SeatType.class);
+
+            for(SeatEntity seat:reservationEntity.getSeats()){
+                SeatType seatType=seat.getType();
+                Double price=seat.getPrice();
+
+                seatCountMap.put(seatType,seatCountMap.getOrDefault(seatType,0)+1);
+
+                if(seatUnitPriceMap.containsKey(seatType)){
+                    if(!seatUnitPriceMap.get(seatType).equals(price)){
+                        throw new IllegalStateException("price mismatch for seat type: "+seatType);
+                    }
+                }
+                else {
+                    seatUnitPriceMap.put(seatType,price);
+                }
+            }
+            for(SeatType type:seatCountMap.keySet()){
+               SeatDetail seatDetail=new SeatDetail();
+               seatDetail.setType(type);
+               seatDetail.setQuantity(seatCountMap.get(type));
+               seatDetail.setPrice(seatUnitPriceMap.get(type));
+               seatDetails.add(seatDetail);
+            }
+            paymentDetails.setSeats(seatDetails);
+
+            reservationCreatedEventProducer.publishReservationCreated(paymentDetails);
 
              return ResponseEntity.status(HttpStatus.CREATED)
                      .body(new ReservationResponseDTO("Reservation made successfully",reservation));
@@ -149,16 +206,15 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-
     @Override
-    public ResponseEntity<ReservationResponseDTO> deleteReservation(Long reservationId) {
+    public ResponseEntity<ReservationResponseDTO> deleteReservation(UUID reservationId) {
         try{
             if(reservationId==null){
                 log.warn("reservations is null for the delete");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if(reservationRepository.existsById(reservationId)){
-                reservationRepository.deleteById(reservationId);
+            if(reservationRepository.existsByReservationId(reservationId)){
+                reservationRepository.deleteByReservationId(reservationId);
                 log.info("Deleted reservation with id: {}", reservationId);
                 return ResponseEntity.status(HttpStatus.OK)
                         .body(new ReservationResponseDTO("reservation "+reservationId+" delected Successfully ",null));
@@ -173,17 +229,29 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public ResponseEntity<ReservationResponseDTO> updateReservation(Reservation reservation) {
+    public ResponseEntity<ReservationResponseDTO> updateReservation(Reservation  reservation) {
         try{
             if(reservation==null){
                 log.error("reservations is null");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if(reservationRepository.existsById(reservation.getReservationId())){
-                reservationRepository.save(modelMapper.map(reservation, ReservationEntity.class));
-                log.info("Updated reservation with id: {}", reservation.getReservationId());
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ReservationResponseDTO("reservation "+reservation.getReservationId()+" updated Successfully ",reservation));
+            ReservationEntity reservationEntity=reservationRepository.findByReservationId(reservation.getReservationId());
+            if(reservationEntity!=null){
+               reservationEntity.setDescription(reservation.getDescription());
+               reservationEntity.setDate(reservation.getDate());
+               reservationEntity.setTime(reservation.getTime());
+               reservationEntity.setConNumber(reservation.getConNumber());
+
+
+
+               ReservationEntity saved=  reservationRepository.save(reservationEntity);
+               Reservation reservationModel=modelMapper.map(reservationEntity,Reservation.class);
+               reservationModel.setCinemaId(reservation.getCinemaId());
+               reservationModel.setMovieId(reservation.getMovieId());
+               reservationModel.setCustomerId(reservation.getCustomerId());
+               log.info("Updated reservation with id: {}", saved.getReservationId());
+               return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ReservationResponseDTO("reservation "+saved.getReservationId()+" updated Successfully ",reservationModel));
             }
             log.warn("No reservation with id: {}", reservation.getReservationId());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -268,9 +336,9 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public ResponseEntity<ReservationResponseDTO> cancelReservation(Long id) {
+    public ResponseEntity<ReservationResponseDTO> cancelReservation(UUID id) {
          try{
-             ReservationEntity reservationEntity = reservationRepository.findById(id).orElseThrow(null);
+             ReservationEntity reservationEntity = reservationRepository.findByReservationId(id);
              for(SeatEntity seat : reservationEntity.getSeats()){
                  seat.setAvailable(true);
                  seat.setReservation(null);
@@ -283,6 +351,48 @@ public class ReservationServiceImpl implements ReservationService {
              log.error("Exception while finding user: {}", e.getMessage(), e);
              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
          }
+    }
+
+    @Override
+    public  ReservationEntity updateSession(PaymentSessionCreatedEvent paymentSessionCreatedEvent) {
+        ReservationEntity reservation = reservationRepository.findByReservationId(paymentSessionCreatedEvent.getReservationId());
+        reservation.setSessionId(paymentSessionCreatedEvent.getSessionId());
+        reservation.setSessionUrl(paymentSessionCreatedEvent.getSessionUrl());
+        reservationRepository.save(reservation);
+        return  reservation;
+    }
+
+    @Override
+    public void confirmReservation(UUID reservationId) {
+        if(reservationId !=null){
+            ReservationEntity reservation = reservationRepository.findByReservationId(reservationId);
+            reservation.setStatus(ReservationStatus.CONFIRMED);
+            ReservationEntity reservationEntity=reservationRepository.save(reservation);
+            Notification notification = new Notification();
+            notification.setReservationId(reservationEntity.getReservationId());
+            notification.setDate(reservationEntity.getDate());
+            notification.setTime(reservationEntity.getTime());
+            notification.setCustomerName(reservationEntity.getCustomer().getName());
+            notification.setEmail(reservationEntity.getCustomer().getEmail());
+            notification.setBranchName(reservationEntity.getCinema().getBranch().getName());
+            notification.setCinemaId(reservationEntity.getCinema().getId());
+            notification.setMovieId(reservationEntity.getMovie().getId());
+
+            List<Long> seatIds=reservationEntity.getSeats()
+                    .stream().map(SeatEntity::getId).collect(Collectors.toList());
+            notification.setSeatIds(seatIds);
+            log.info("Reservation {} Confirmed ..........",reservationEntity.getReservationId());
+            reservationSuccessEventProducer.publishReservationSuccess(notification);
+        }
+    }
+
+    @Override
+    public void failReservation(UUID reservationId) {
+        if(reservationId !=null){
+            ReservationEntity reservation = reservationRepository.findByReservationId(reservationId);
+            reservation.setStatus(ReservationStatus.CANCELLED);
+            reservationRepository.save(reservation);
+        }
     }
 
 

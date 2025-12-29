@@ -2,8 +2,12 @@ package com.cbs.cinebook.entity;
 
 import com.cbs.cinebook.enums.SeatType;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -27,15 +31,22 @@ public class SeatEntity {
     private String rowLetter;
 
     @Column(name = "seat_type", nullable = false)
+    @Enumerated(EnumType.STRING)
     private SeatType type;
 
-    @Column(name = "isAvailable", nullable = false)
-    private boolean isAvailable;
+    @Column(name = "available", nullable = false)
+    private boolean available;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recevation", nullable = false)
-    @JsonBackReference
-    private ReservationEntity reservation;
+    @Column(name = "price",nullable = false)
+    private Double price;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name="seat_reservation",
+     joinColumns = @JoinColumn(name="seat_id"),
+            inverseJoinColumns = @JoinColumn(name = "reservation_id")
+    )
+    @JsonManagedReference
+    private Set<ReservationEntity> reservation=new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cinema", nullable = false)

@@ -3,6 +3,7 @@ package com.cbs.cinebook.service.impl;
 import com.cbs.cinebook.dto.Seat;
 import com.cbs.cinebook.dto.response.SeatResponseDTO;
 import com.cbs.cinebook.entity.SeatEntity;
+import com.cbs.cinebook.repositoty.CinemaRepository;
 import com.cbs.cinebook.repositoty.SeatRepository;
 import com.cbs.cinebook.service.SeatService;
 import lombok.RequiredArgsConstructor;
@@ -21,18 +22,25 @@ public class SeatServiceImpl implements SeatService {
 
     private final SeatRepository seatRepository;
     private final ModelMapper modelMapper;
+    private final CinemaRepository cinemaRepository;
     @Override
-    public ResponseEntity<SeatResponseDTO> addSeat(Seat seat) {
+    public ResponseEntity<SeatResponseDTO> addSeat(Seat seatRequest) {
         try{
-            if(seat==null){
+            if(seatRequest==null){
                 log.warn("seat is null for add seat");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if(seatRepository.existsById(seat.getId())){
+            if(seatRepository.existsByNumber(seatRequest.getNumber()) &&
+                    seatRepository.existsByRowLetter(seatRequest.getRowLetter())){
                log.warn("seat is already exist for add seat");
                return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
-            seatRepository.save(modelMapper.map(seat, SeatEntity.class));
+            SeatEntity seatEntity=modelMapper.map(seatRequest,SeatEntity.class);
+            seatEntity.setCinema(cinemaRepository.findById(seatRequest.getCinemaId()).orElse(null));
+
+            SeatEntity saved= seatRepository.save(seatEntity);
+            Seat seat=modelMapper.map(saved,Seat.class);
+            seat.setCinemaId(saved.getId());
             log.info("seat added successfully for add seat");
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new SeatResponseDTO("Seat successfully added",seat));
@@ -44,20 +52,22 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-    public ResponseEntity<SeatResponseDTO> updateSeat(Seat seat) {
+    public ResponseEntity<SeatResponseDTO> updateSeat(Seat seatRequest) {
         try{
-            if(seat==null){
-                log.warn("seat is null for update seat");
+            if(seatRequest==null){
+                log.warn("seatRequest is null for update seatRequest");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if(seatRepository.existsById(seat.getId())){
-                seatRepository.save(modelMapper.map(seat, SeatEntity.class));
-                log.info("seat id {} updated successfully for update seat", seat.getId());
+            if(seatRepository.existsById(seatRequest.getId())){
+              SeatEntity seatEntity=seatRepository.save(modelMapper.map(seatRequest, SeatEntity.class));
+              Seat seat=modelMapper.map(seatEntity,Seat.class);
+              seat.setCinemaId(seat.getCinemaId());
+                log.info("seatRequest id {} updated successfully for update seatRequest", seatRequest.getId());
                 return ResponseEntity.status(HttpStatus.FOUND)
-                        .body(new SeatResponseDTO("Seat id "+seat.getId()+" successfully updated",seat));
+                        .body(new SeatResponseDTO("Seat id "+seatRequest.getId()+" successfully updated",seat));
 
             }
-            log.warn("seat id {} not found for update seat", seat.getId());
+            log.warn("seatRequest id {} not found for update seatRequest", seatRequest.getId());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }catch (Exception ex){
             log.error("Exception while updating Seat {}", ex.getMessage(), ex);
@@ -66,19 +76,21 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-    public ResponseEntity<SeatResponseDTO> deleteSeat(Seat seat) {
+    public ResponseEntity<SeatResponseDTO> deleteSeat(Long id){
         try{
-            if(seat==null){
+            if(id==null){
                 log.warn("seat is null for delete seat");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if(seatRepository.existsById(seat.getId())) {
+
+            if(seatRepository.existsById(id)) {
+                SeatEntity seat=seatRepository.findById(id).orElse(null);
                 seatRepository.delete(modelMapper.map(seat, SeatEntity.class));
-                log.info("seat id {} deleted successfully", seat.getId());
+                log.info("seat id {} deleted successfully",id);
                 return ResponseEntity.status(HttpStatus.OK)
-                        .body(new SeatResponseDTO("Seat id " + seat.getId() + " successfully deleted", null));
+                        .body(new SeatResponseDTO("Seat id " + id + " successfully deleted", null));
             }
-            log.warn("seat id {} not found for delete seat", seat.getId());
+            log.warn("seat id {} not found for delete seat",id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }catch (Exception ex){
             log.error("Exception while deleting Seat {}", ex.getMessage(), ex);
@@ -93,7 +105,7 @@ public class SeatServiceImpl implements SeatService {
             if(seatEntities.isEmpty()){
                 log.warn("seats is null for get seats");
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ArrayList<Seat>());
+                        .body(new ArrayList<>());
             }
             List<Seat> seats = seatEntities.stream()
                     .map(entity->modelMapper.map(entity,Seat.class))

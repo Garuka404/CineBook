@@ -1,5 +1,6 @@
 package com.cbs.cinebook.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Setter
@@ -13,7 +14,7 @@ public class Customer {
     private String name;
     private String email;
     private String address;
-    private String contactNo;
+    private String number;
     private String age;
 
 }

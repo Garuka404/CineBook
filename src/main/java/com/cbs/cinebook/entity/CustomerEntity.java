@@ -1,6 +1,8 @@
 package com.cbs.cinebook.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,7 +22,8 @@ public class CustomerEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(unique = true,nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String keyClockId;
 
     @Column(nullable = false,length = 50)
@@ -33,12 +36,12 @@ public class CustomerEntity {
     private String email;
 
     @Column(nullable = false,length = 10)
-    private String contactNo;
+    private String number;
 
     @Column(nullable = false,length = 10)
     private String age;
 
-    @OneToMany(mappedBy = "bookedBy",cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<ReservationEntity> reservations=new HashSet<>();
 

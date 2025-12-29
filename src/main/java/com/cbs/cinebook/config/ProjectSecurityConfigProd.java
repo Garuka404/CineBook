@@ -20,11 +20,11 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @Configuration
-@Profile("!prod")
+@Profile("prod")
 @RequiredArgsConstructor
-public class ProjectSecurityConfig {
+public class ProjectSecurityConfigProd {
 
-    @Bean
+      @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeyclockRoleConverter());
@@ -33,14 +33,14 @@ public class ProjectSecurityConfig {
                 .cors(corsConfig -> corsConfig.configurationSource(new CorsConfigurationSource() {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                        CorsConfiguration corsConfiguration = new CorsConfiguration();
-                        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
-                        corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-                        corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-                        corsConfiguration.setAllowCredentials(true);
-                        corsConfiguration.setExposedHeaders(Arrays.asList("Authorization"));
-                        corsConfiguration.setMaxAge(3600L);
-                        return corsConfiguration;
+                       CorsConfiguration corsConfiguration = new CorsConfiguration();
+                       corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
+                       corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
+                       corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
+                       corsConfiguration.setAllowCredentials(true);
+                       corsConfiguration.setExposedHeaders(Arrays.asList("Authorization"));
+                       corsConfiguration.setMaxAge(3600L);
+                       return corsConfiguration;
                     }
                 }))
                 .csrf(csrfConfig -> csrfConfig.csrfTokenRequestHandler(csrfTokenRequestAttributeHandler)
@@ -48,15 +48,13 @@ public class ProjectSecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
-                .requiresChannel(rcc->rcc.anyRequest().requiresInsecure())
+                 .requiresChannel(rcc->rcc.anyRequest().requiresSecure())
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html").permitAll()
-                        .anyRequest().authenticated());
-
+                        .anyRequest().authenticated()
+                        .requestMatchers("/not","/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html","/api/customer/sync").permitAll());
         http.oauth2ResourceServer(rsc->rsc.jwt(jwtConfigurer->jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
 
         return http.build();
     }
-
 }

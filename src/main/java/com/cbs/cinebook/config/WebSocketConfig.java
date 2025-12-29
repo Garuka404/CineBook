@@ -1,6 +1,6 @@
 package com.cbs.cinebook.config;
 
-import com.cbs.cinebook.socket.AvailableSeatSender;
+import com.cbs.cinebook.socket.ReservationSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,9 +12,9 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final AvailableSeatSender availableSeatSender;
+    private final ReservationSender reservationSender;
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-          registry.addHandler(availableSeatSender,"/status").setAllowedOrigins("*");
+          registry.addHandler(reservationSender,"/status").setAllowedOrigins("*");
     }
 }

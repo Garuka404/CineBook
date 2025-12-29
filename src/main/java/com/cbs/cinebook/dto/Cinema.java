@@ -14,7 +14,7 @@ public class Cinema {
     private String name;
     private Long hallNumber;
     private String location;
-    private String capacity;
-    private BranchEntity branch;
+    private Long capacity;
+    private Long branchId;
 
 }

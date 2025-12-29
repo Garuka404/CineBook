@@ -1,54 +1,74 @@
 package com.cbs.cinebook.controller;
 
 import com.cbs.cinebook.dto.Reservation;
-import com.cbs.cinebook.dto.request.ReservationRequestDTO;
 import com.cbs.cinebook.dto.response.ReservationResponseDTO;
-import com.cbs.cinebook.entity.ReservationEntity;
 import com.cbs.cinebook.service.ReservationService;
+import com.cbs.cinebook.service.UserSyncService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/reservation")
 public class ReservationController {
     private final ReservationService reservationService;
+    private final UserSyncService userSyncService;
 
-    @PostMapping("/add")
-    public ResponseEntity<ReservationResponseDTO> addReservation(@RequestBody ReservationRequestDTO reservationRequestDTO) {
+    @PostMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<ReservationResponseDTO> addReservation(@RequestBody Reservation  reservationRequestDTO,@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ReservationResponseDTO("not found jwt",null));
+        }
+        userSyncService.syncUser(jwt);
         return reservationService.setReservation(reservationRequestDTO);
     }
-    @GetMapping("/all")
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> getAllReservations() {
         return reservationService.getAllReservation();
     }
-    @GetMapping("/search-by-email/{id}")
-    public ResponseEntity<ReservationResponseDTO> getReservationsById(@PathVariable Long id) {
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReservationResponseDTO> getReservationsById(@PathVariable UUID id) {
         return reservationService.getReservationById(id);
     }
-    @GetMapping("/search-by-date")
-    public ResponseEntity<List<Reservation>> getReservationsByDate(@RequestParam LocalDate date) {
+    @GetMapping("/{date}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<List<Reservation>> getReservationsByDate(@PathVariable LocalDate date) {
         return reservationService.getReservationByDate(date);
     }
-    @GetMapping("/search-by-time")
-    public ResponseEntity<List<Reservation>> getReservationsByTime(@RequestParam LocalTime time) {
+    @GetMapping("/{time}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<List<Reservation>> getReservationsByTime(@PathVariable LocalTime time) {
         return reservationService.getReservationByTime(time);
     }
-    @PutMapping("/update")
+    @PutMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ReservationResponseDTO> updateReservation(@RequestBody Reservation reservation) {
         return reservationService.updateReservation(reservation);
     }
-    @DeleteMapping("/delete-by-id")
-    public ResponseEntity<ReservationResponseDTO> deleteReservationById(@RequestParam(name = "reservationId") Long reservationId) {
-        return reservationService.deleteReservation(reservationId);
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReservationResponseDTO> deleteReservationById(@PathVariable UUID id) {
+        return reservationService.deleteReservation(id);
     }
-    @GetMapping("/search-by-date-and-time")
-    public ResponseEntity<List<Reservation>> getReservationsByDateAndTime(@RequestParam(name = "reservationDate") LocalDate date, @RequestParam(name = "reservationTime") LocalTime time){
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<List<Reservation>> getReservationsByDateAndTime(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time){
         return reservationService.getReservationByDateAndTime(date, time);
     }
 

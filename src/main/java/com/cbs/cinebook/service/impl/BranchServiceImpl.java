@@ -26,7 +26,7 @@ public class BranchServiceImpl implements BranchService {
             List<BranchEntity> branchEntities=branchRepository.findAll();
             if(branchEntities.isEmpty()){
                 log.warn("No branches found for the add for the cinema");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
             }
             List<Branch> branchEntityList=branchEntities.stream()
                     .map(entity->modelMapper.map(entity,Branch.class))
@@ -68,14 +68,15 @@ public class BranchServiceImpl implements BranchService {
                 log.warn("Branch id is null for the add for the cinema");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            if(branchRepository.existsById(branch.getId())){
+            if(branchRepository.existsByContact((branch.getContact()))){
                 log.warn("Branch already exists with id {}", branch.getId());
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
-            branchRepository.save(modelMapper.map(branch,BranchEntity.class));
+           BranchEntity branchEntity= branchRepository.save(modelMapper.map(branch,BranchEntity.class));
             log.info("Branch has  been successfully added");
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new BranchResponseDTO("Branch "+branch.getId()+" has been Successfully added",branch));
+                    .body(new BranchResponseDTO("Branch "+branchEntity.getId()+" has been Successfully added",
+                            modelMapper.map(branchEntity, Branch.class)));
 
         }catch (Exception ex){
             log.error("Exception while finding Branch: {}", ex.getMessage(), ex);
@@ -91,10 +92,11 @@ public class BranchServiceImpl implements BranchService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
             if(branchRepository.existsById(branch.getId())){
-                branchRepository.save(modelMapper.map(branch,BranchEntity.class));
-                log.info("Branch found with id {} for the update", branch.getId());
+              BranchEntity branchEntity= branchRepository.save(modelMapper.map(branch,BranchEntity.class));
+                log.info("Branch found with id {} for the update", branchEntity.getId());
                 return ResponseEntity.status(HttpStatus.OK)
-                        .body(new BranchResponseDTO("Branch "+branch.getId()+"found successfully updated",branch));
+                        .body(new BranchResponseDTO("Branch "+branchEntity.getId()+"found successfully updated",
+                                modelMapper.map(branchEntity, Branch.class)));
 
             }
             log.info("Branch not found with id {} for the update", branch.getId());

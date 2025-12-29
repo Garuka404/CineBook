@@ -16,7 +16,6 @@ public class Seat {
     private SeatType type;
     private Double price;
     private boolean isAvailable;
-    private Cinema cinema;
-    private Reservation reservation;
+    private Long cinemaId;
 
 }

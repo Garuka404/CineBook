@@ -1,7 +1,5 @@
 package com.cbs.cinebook.dto;
 
-import com.cbs.cinebook.entity.BranchEntity;
-import jakarta.persistence.Entity;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -20,6 +18,7 @@ public class Movie {
     private LocalDate showDate;
     private String description;
     private Long branchId;
+
 
 
 }

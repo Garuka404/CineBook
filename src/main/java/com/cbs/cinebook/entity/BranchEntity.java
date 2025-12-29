@@ -1,5 +1,6 @@
 package com.cbs.cinebook.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,7 +32,7 @@ public class BranchEntity {
     private  String contact;
 
     @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL,orphanRemoval = true)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<CinemaEntity> cinemas=new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)

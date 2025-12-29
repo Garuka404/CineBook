@@ -1,27 +1,29 @@
-package com.cbs.cinebook.dto.request;
+package com.cbs.cinebook.dto;
 
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 @Setter
 @Getter
-@ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReservationRequestDTO {
-    private Long reservationId;
+public class Notification {
+    private UUID reservationId;
     @Size(min = 10, max = 10)
-    private String conNumber;
-    private String description;
     private LocalDate date;
     private LocalTime time;
-    private Long customerId;
+    private String customerName;
+    private String email;
+    private String branchName;
     private Long cinemaId;
     private Long  movieId;
     private List<Long> seatIds;
-
 }

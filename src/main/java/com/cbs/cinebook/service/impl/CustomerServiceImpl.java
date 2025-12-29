@@ -35,8 +35,9 @@ public class CustomerServiceImpl implements CustomerService {
             }
             if (customerRepository.existsByEmail(email)) {
                 log.info("Customer with email {} found", email);
+                CustomerEntity customerEntity = customerRepository.findByEmail(email);
                 return ResponseEntity.status(HttpStatus.FOUND)
-                        .body(new CustomerResponseDTO("Customer",modelMapper.map(customerRepository.findByEmail(email), Customer.class)));
+                        .body(new CustomerResponseDTO("Customer",modelMapper.map(customerEntity,Customer.class)));
 
             }
             log.warn("Customer with email {} not exits", email);
@@ -81,12 +82,17 @@ public class CustomerServiceImpl implements CustomerService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new CustomerResponseDTO("Customer is null", null));
             }
-            if(customerRepository.existsByEmail(customer.getEmail())) {
-                customerRepository.save(modelMapper.map(customer, CustomerEntity.class));
-                log.info("Customer with email {} updated Successfully", customer.getEmail());
-                ResponseEntity.status(HttpStatus.CREATED)
-                        .body(new CustomerResponseDTO("Customer with email " + customer.getEmail() + " updated successfully", customer));
-
+            if(customerRepository.existsById(customer.getId())) {
+                CustomerEntity customerEntity=customerRepository.findById(customer.getId()).orElse(null);
+                if(customerEntity!=null) {
+                    customerEntity.setAddress(customer.getAddress());
+                    customerEntity.setNumber( customer.getNumber());
+                    customerRepository.save(customerEntity);
+                    log.info("Customer with email {} updated Successfully", customerEntity.getEmail());
+                    return ResponseEntity.status(HttpStatus.CREATED)
+                            .body(new CustomerResponseDTO("Customer with email " + customerEntity.getEmail() + " updated successfully",
+                                    modelMapper.map(customerEntity, Customer.class)));
+                }
             }
             log.warn("Customer with email {} not exits for the update", customer.getEmail());
             return ResponseEntity.status(HttpStatus.CONFLICT)

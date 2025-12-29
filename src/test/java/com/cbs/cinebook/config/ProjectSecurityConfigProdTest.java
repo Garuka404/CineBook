@@ -9,17 +9,17 @@ import org.springframework.security.web.SecurityFilterChain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class ProjectSecurityConfigTest {
+class ProjectSecurityConfigProdTest {
 
     @Autowired
-    private ProjectSecurityConfig projectSecurityConfig;
+    private ProjectSecurityConfigProd projectSecurityConfigProd;
 
     @Autowired
     private HttpSecurity httpSecurity;
 
     @Test
     void testSecurityFilterChainLoads() throws Exception {
-        SecurityFilterChain chain = projectSecurityConfig.defaultSecurityFilterChain(httpSecurity);
+        SecurityFilterChain chain = projectSecurityConfigProd.defaultSecurityFilterChain(httpSecurity);
         assertThat(chain).isNotNull();
     }
 }
