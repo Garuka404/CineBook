@@ -1,22 +1,5 @@
 package com.cbs.cinebook.service;
 
-import com.cbs.cinebook.constant.ApplicationConstant;
-import com.cbs.cinebook.dto.Customer;
-import com.cbs.cinebook.dto.response.CustomerResponseDTO;
-import com.cbs.cinebook.entity.CustomerEntity;
-import com.cbs.cinebook.repositoty.CustomerRepository;
-import com.cbs.cinebook.service.impl.CustomerServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.modelmapper.ModelMapper;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.ResponseEntity;
-
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
-
 class CustomerServiceImplTest {
 
 //    @Mock

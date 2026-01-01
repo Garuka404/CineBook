@@ -1,23 +1,15 @@
-package com.cbs.cinebook.dto;
+package com.notification.notificationservice.dto;
 
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class Notification {
     private UUID reservationId;
-    @Size(min = 10, max = 10)
     private LocalDate date;
     private LocalTime time;
     private String customerName;
@@ -26,4 +18,6 @@ public class Notification {
     private Long cinemaId;
     private String  movieName;
     private List<Long> seatIds;
+
 }
+

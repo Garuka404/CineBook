@@ -376,7 +376,7 @@ public class ReservationServiceImpl implements ReservationService {
             notification.setEmail(reservationEntity.getCustomer().getEmail());
             notification.setBranchName(reservationEntity.getCinema().getBranch().getName());
             notification.setCinemaId(reservationEntity.getCinema().getId());
-            notification.setMovieId(reservationEntity.getMovie().getId());
+            notification.setMovieName(reservationEntity.getMovie().getName());
 
             List<Long> seatIds=reservationEntity.getSeats()
                     .stream().map(SeatEntity::getId).collect(Collectors.toList());
